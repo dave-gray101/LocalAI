@@ -92,7 +92,7 @@ func (rbbs RuleBasedBackendService) RuleBasedLoad(modelName string, alreadyLoade
 	ruleBasedLoadDataCtx := ast.NewDataContext()
 
 	ruleBasedLoadDataCtx.Add("ModelLoader", rbbs.modelLoader)
-	ruleBasedLoadDataCtx.Add("LoadedModelCount", rbbs.modelLoader.LoadedModelCount()) // Still relevant after second line???
+	ruleBasedLoadDataCtx.Add("LoadedModelCount", rbbs.modelLoader.LoadedModelCount())
 	ruleBasedLoadDataCtx.Add("LoadedModels", rbbs.modelLoader.SortedLoadedModelMetadata())
 
 	ruleBasedLoadDataCtx.Add("ActionDefs", ruleBasedBackendResultActionDefinitions)
@@ -100,7 +100,9 @@ func (rbbs RuleBasedBackendService) RuleBasedLoad(modelName string, alreadyLoade
 	ruleBasedLoadDataCtx.Add("RequestedModelName", modelName)
 	ruleBasedLoadDataCtx.Add("Source", source)
 	ruleBasedLoadDataCtx.Add("Request", optionalRequest)
+
 	ruleBasedLoadDataCtx.Add("BackendConfig", bc)
+	ruleBasedLoadDataCtx.Add("AppConfig", rbbs.appConfig)
 
 	ruleBasedLoadDataCtx.Add("Result", result)
 
@@ -114,5 +116,4 @@ func (rbbs RuleBasedBackendService) RuleBasedLoad(modelName string, alreadyLoade
 		return nil, err
 	}
 	return &result, nil
-
 }
