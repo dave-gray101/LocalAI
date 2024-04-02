@@ -201,12 +201,12 @@ func (ml *ModelLoader) BackendLoader(opts ...Option) (client grpc.Backend, err e
 		backendToConsume = backend
 	}
 
-	addr, err := ml.LoadModel(o.model, ml.grpcModel(backendToConsume, o))
+	lmm, err := ml.LoadModel(o.model, ml.grpcModel(backendToConsume, o))
 	if err != nil {
 		return nil, err
 	}
 
-	return ml.resolveAddress(addr, o.parallelRequests)
+	return ml.resolveAddress(lmm.ModelAddress, o.parallelRequests)
 }
 
 func (ml *ModelLoader) GreedyLoader(opts ...Option) (grpc.Backend, error) {

@@ -15,22 +15,10 @@ import (
 	gopsutil "github.com/shirou/gopsutil/v3/process"
 )
 
-type BackendMonitor struct {
-	configLoader *config.BackendConfigLoader
-	modelLoader  *model.ModelLoader
-	options      *config.ApplicationConfig // Taking options in case we need to inspect ExternalGRPCBackends, though that's out of scope for now, hence the name.
-}
-
-func NewBackendMonitor(configLoader *config.BackendConfigLoader, modelLoader *model.ModelLoader, appConfig *config.ApplicationConfig) BackendMonitor {
-	return BackendMonitor{
-		configLoader: configLoader,
-		modelLoader:  modelLoader,
-		options:      appConfig,
-	}
-}
-
-func (bm BackendMonitor) getModelLoaderIDFromModelName(modelName string) (string, error) {
-	config, exists := bm.configLoader.GetBackendConfig(modelName)
+// This utility extension is used for backend_monitor and backend_rules, but nowhere outside of service.
+// trying out this style - TODO is it better or worse
+func getModelLoaderIDFromModelName(bcl *config.BackendConfigLoader, modelName string) (string, config.BackendConfig, error) {
+	config, exists := bcl.GetBackendConfig(modelName)
 	var backendId string
 	if exists {
 		backendId = config.Model
@@ -43,7 +31,21 @@ func (bm BackendMonitor) getModelLoaderIDFromModelName(modelName string) (string
 		backendId = fmt.Sprintf("%s.bin", backendId)
 	}
 
-	return backendId, nil
+	return backendId, config, nil
+}
+
+type BackendMonitor struct {
+	configLoader *config.BackendConfigLoader
+	modelLoader  *model.ModelLoader
+	options      *config.ApplicationConfig // Taking options in case we need to inspect ExternalGRPCBackends, though that's out of scope for now, hence the name.
+}
+
+func NewBackendMonitor(configLoader *config.BackendConfigLoader, modelLoader *model.ModelLoader, appConfig *config.ApplicationConfig) BackendMonitor {
+	return BackendMonitor{
+		configLoader: configLoader,
+		modelLoader:  modelLoader,
+		options:      appConfig,
+	}
 }
 
 func (bm *BackendMonitor) SampleLocalBackendProcess(model string) (*schema.BackendMonitorResponse, error) {
@@ -102,7 +104,7 @@ func (bm *BackendMonitor) SampleLocalBackendProcess(model string) (*schema.Backe
 }
 
 func (bm BackendMonitor) CheckAndSample(modelName string) (*proto.StatusResponse, error) {
-	backendId, err := bm.getModelLoaderIDFromModelName(modelName)
+	backendId, _, err := getModelLoaderIDFromModelName(bm.configLoader, modelName)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +134,7 @@ func (bm BackendMonitor) CheckAndSample(modelName string) (*proto.StatusResponse
 }
 
 func (bm BackendMonitor) ShutdownModel(modelName string) error {
-	backendId, err := bm.getModelLoaderIDFromModelName(modelName)
+	backendId, _, err := getModelLoaderIDFromModelName(bm.configLoader, modelName)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"text/template"
@@ -75,6 +76,7 @@ type ModelLoader struct {
 type ModelAddress string
 
 type LoadedModelMetadata struct {
+	ModelName    string
 	ModelAddress ModelAddress
 	LoadedAt     time.Time
 	LastAccessed time.Time
@@ -128,13 +130,28 @@ func (ml *ModelLoader) ListModels() ([]string, error) {
 	return models, nil
 }
 
-func (ml *ModelLoader) LoadModel(modelName string, loader func(string, string) (ModelAddress, error)) (ModelAddress, error) {
+func (ml *ModelLoader) LoadedModelCount() int {
+	return len(ml.models)
+}
+
+func (ml *ModelLoader) SortedLoadedModelMetadata() []*LoadedModelMetadata {
+	lmms := []*LoadedModelMetadata{}
+	for _, lmm := range ml.models {
+		lmms = append(lmms, lmm)
+	}
+	slices.SortFunc(lmms, func(a, b *LoadedModelMetadata) int {
+		return a.LastAccessed.Compare(b.LastAccessed)
+	})
+	return lmms
+}
+
+func (ml *ModelLoader) LoadModel(modelName string, loader func(string, string) (ModelAddress, error)) (*LoadedModelMetadata, error) {
 	ml.mu.Lock()
 	defer ml.mu.Unlock()
 
 	// Check if we already have a loaded model
 	if model := ml.CheckIsLoaded(modelName, true); model.ModelAddress != "" {
-		return model.ModelAddress, nil
+		return model, nil
 	}
 
 	// Load the model and keep it in memory for later use
@@ -143,7 +160,7 @@ func (ml *ModelLoader) LoadModel(modelName string, loader func(string, string) (
 
 	model, err := loader(modelName, modelFile)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// TODO: Add a helper method to iterate all prompt templates associated with a config if and only if it's YAML?
@@ -155,11 +172,12 @@ func (ml *ModelLoader) LoadModel(modelName string, loader func(string, string) (
 	// }
 
 	ml.models[modelName] = &LoadedModelMetadata{
+		ModelName:    modelName,
 		ModelAddress: model,
 		LoadedAt:     time.Now(),
 		LastAccessed: time.Now(),
 	}
-	return model, nil
+	return ml.models[modelName], nil
 }
 
 func (ml *ModelLoader) ShutdownModel(modelName string) error {
@@ -204,11 +222,7 @@ func (ml *ModelLoader) CheckIsLoaded(modelName string, hardCheck bool) *LoadedMo
 		}
 
 		if hardCheck {
-			ml.models[modelName] = &LoadedModelMetadata{
-				ModelAddress: ml.models[modelName].ModelAddress,
-				LoadedAt:     ml.models[modelName].LoadedAt,
-				LastAccessed: time.Now(),
-			}
+			ml.models[modelName].LastAccessed = time.Now()
 		}
 
 		return ml.models[modelName]
