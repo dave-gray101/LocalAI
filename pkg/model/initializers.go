@@ -15,8 +15,8 @@ import (
 )
 
 var Aliases map[string]string = map[string]string{
-	"go-llama": LLamaCPP,
-	"llama":    LLamaCPP,
+	"go-llama":       LLamaCPP,
+	"llama":          LLamaCPP,
 	"embedded-store": LocalStoreBackend,
 }
 
@@ -215,11 +215,11 @@ func (ml *ModelLoader) GreedyLoader(opts ...Option) (grpc.Backend, error) {
 	ml.mu.Lock()
 	// Return earlier if we have a model already loaded
 	// (avoid looping through all the backends)
-	if m := ml.CheckIsLoaded(o.model); m != "" {
+	if m := ml.CheckIsLoaded(o.model, false); m.ModelAddress != "" {
 		log.Debug().Msgf("Model '%s' already loaded", o.model)
 		ml.mu.Unlock()
 
-		return ml.resolveAddress(m, o.parallelRequests)
+		return ml.resolveAddress(m.ModelAddress, o.parallelRequests)
 	}
 	// If we can have only one backend active, kill all the others (except external backends)
 	if o.singleActiveBackend {

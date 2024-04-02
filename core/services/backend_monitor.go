@@ -106,12 +106,12 @@ func (bm BackendMonitor) CheckAndSample(modelName string) (*proto.StatusResponse
 	if err != nil {
 		return nil, err
 	}
-	modelAddr := bm.modelLoader.CheckIsLoaded(backendId)
-	if modelAddr == "" {
+	lmm := bm.modelLoader.CheckIsLoaded(backendId, false)
+	if lmm.ModelAddress == "" {
 		return nil, fmt.Errorf("backend %s is not currently loaded", backendId)
 	}
 
-	status, rpcErr := modelAddr.GRPC(false, nil).Status(context.TODO())
+	status, rpcErr := lmm.ModelAddress.GRPC(false, nil).Status(context.TODO())
 	if rpcErr != nil {
 		log.Warn().Msgf("backend %s experienced an error retrieving status info: %s", backendId, rpcErr.Error())
 		val, slbErr := bm.SampleLocalBackendProcess(backendId)

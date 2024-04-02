@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
 	"github.com/Masterminds/sprig/v3"
 	grammar "github.com/go-skynet/LocalAI/pkg/grammar"
@@ -65,13 +66,19 @@ type ModelLoader struct {
 	mu        sync.Mutex
 	// TODO: this needs generics
 	grpcClients   map[string]grpc.Backend
-	models        map[string]ModelAddress
+	models        map[string]*LoadedModelMetadata
 	grpcProcesses map[string]*process.Process
 	templates     map[TemplateType]map[string]*template.Template
 	wd            *WatchDog
 }
 
 type ModelAddress string
+
+type LoadedModelMetadata struct {
+	ModelAddress ModelAddress
+	LoadedAt     time.Time
+	LastAccessed time.Time
+}
 
 func (m ModelAddress) GRPC(parallel bool, wd *WatchDog) grpc.Backend {
 	enableWD := false
@@ -85,7 +92,7 @@ func NewModelLoader(modelPath string) *ModelLoader {
 	nml := &ModelLoader{
 		ModelPath:     modelPath,
 		grpcClients:   make(map[string]grpc.Backend),
-		models:        make(map[string]ModelAddress),
+		models:        make(map[string]*LoadedModelMetadata),
 		templates:     make(map[TemplateType]map[string]*template.Template),
 		grpcProcesses: make(map[string]*process.Process),
 	}
@@ -126,8 +133,8 @@ func (ml *ModelLoader) LoadModel(modelName string, loader func(string, string) (
 	defer ml.mu.Unlock()
 
 	// Check if we already have a loaded model
-	if model := ml.CheckIsLoaded(modelName); model != "" {
-		return model, nil
+	if model := ml.CheckIsLoaded(modelName, true); model.ModelAddress != "" {
+		return model.ModelAddress, nil
 	}
 
 	// Load the model and keep it in memory for later use
@@ -147,7 +154,11 @@ func (ml *ModelLoader) LoadModel(modelName string, loader func(string, string) (
 	// 	return nil, err
 	// }
 
-	ml.models[modelName] = model
+	ml.models[modelName] = &LoadedModelMetadata{
+		ModelAddress: model,
+		LoadedAt:     time.Now(),
+		LastAccessed: time.Now(),
+	}
 	return model, nil
 }
 
@@ -159,6 +170,7 @@ func (ml *ModelLoader) ShutdownModel(modelName string) error {
 }
 
 func (ml *ModelLoader) stopModel(modelName string) error {
+	// TODO: Figure out why this was swapped to defer and if it can still return an error
 	defer ml.deleteProcess(modelName)
 	if _, ok := ml.models[modelName]; !ok {
 		return fmt.Errorf("model %s not found", modelName)
@@ -167,31 +179,42 @@ func (ml *ModelLoader) stopModel(modelName string) error {
 	//return ml.deleteProcess(modelName)
 }
 
-func (ml *ModelLoader) CheckIsLoaded(s string) ModelAddress {
+// Checks if a model is loaded by id, and if so, returns the current LoadedModelMetadata
+// modelName is what model to check for
+// if hardCheck is true, the LastAccess time will be updated to now.
+func (ml *ModelLoader) CheckIsLoaded(modelName string, hardCheck bool) *LoadedModelMetadata {
 	var client grpc.Backend
-	if m, ok := ml.models[s]; ok {
-		log.Debug().Msgf("Model already loaded in memory: %s", s)
-		if c, ok := ml.grpcClients[s]; ok {
+	if lmm, ok := ml.models[modelName]; ok {
+		log.Debug().Msgf("Model already loaded in memory: %s", modelName)
+		if c, ok := ml.grpcClients[modelName]; ok {
 			client = c
 		} else {
-			client = m.GRPC(false, ml.wd)
+			client = lmm.ModelAddress.GRPC(false, ml.wd)
 		}
 		alive, err := client.HealthCheck(context.Background())
 		if !alive {
 			log.Warn().Msgf("GRPC Model not responding: %s", err.Error())
 			log.Warn().Msgf("Deleting the process in order to recreate it")
-			if !ml.grpcProcesses[s].IsAlive() {
-				log.Debug().Msgf("GRPC Process is not responding: %s", s)
+			if !ml.grpcProcesses[modelName].IsAlive() {
+				log.Debug().Msgf("GRPC Process is not responding: %s", modelName)
 				// stop and delete the process, this forces to re-load the model and re-create again the service
-				ml.deleteProcess(s)
-				return ""
+				ml.deleteProcess(modelName)
+				return nil
 			}
 		}
 
-		return m
+		if hardCheck {
+			ml.models[modelName] = &LoadedModelMetadata{
+				ModelAddress: ml.models[modelName].ModelAddress,
+				LoadedAt:     ml.models[modelName].LoadedAt,
+				LastAccessed: time.Now(),
+			}
+		}
+
+		return ml.models[modelName]
 	}
 
-	return ""
+	return nil
 }
 
 func (ml *ModelLoader) EvaluateTemplateForPrompt(templateType TemplateType, templateName string, in PromptTemplateData) (string, error) {
