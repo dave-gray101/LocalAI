@@ -114,14 +114,7 @@ func App(application *core.Application) (*fiber.App, error) {
 		})
 	}
 
-	// auth := middleware.GetAuth(application.ApplicationConfig)
-	// Dirty hack for quick test -- make the old auth useless, depend on the new one.
-	// if it works, full remove
-	auth := func(ctx *fiber.Ctx) error {
-		return ctx.Next()
-	}
-
-	app.Use(middleware.NewTmpKeyAuth(middleware.GetKeyAuthConfig(application.ApplicationConfig)))
+	app.Use(middleware.NewKeyAuth(middleware.GetKeyAuthConfig(application.ApplicationConfig)))
 
 	requestExtractor := middleware.NewRequestExtractor(application.ModelLoader, application.ApplicationConfig)
 
@@ -149,13 +142,13 @@ func App(application *core.Application) (*fiber.App, error) {
 	// Register all routes - TODO: enhance for partial registration?
 	// For the "large" register function, it seems to make sense to pass application directly and allow them to sort out their dependencies.
 	// However, for particularly simple routes, passing dependencies directly may be more clean? Try both and experiment!
-	routes.RegisterElevenLabsRoutes(app, application.TextToSpeechBackendService, requestExtractor, auth)
-	routes.RegisterLocalAIRoutes(app, application, requestExtractor, auth)
-	routes.RegisterOpenAIRoutes(app, application, requestExtractor, auth)
-	routes.RegisterJINARoutes(app, application.BackendConfigLoader, application.ModelLoader, application.ApplicationConfig, auth)
+	routes.RegisterElevenLabsRoutes(app, application.TextToSpeechBackendService, requestExtractor)
+	routes.RegisterLocalAIRoutes(app, application, requestExtractor)
+	routes.RegisterOpenAIRoutes(app, application, requestExtractor)
+	routes.RegisterJINARoutes(app, application.BackendConfigLoader, application.ModelLoader, application.ApplicationConfig)
 
 	if !application.ApplicationConfig.DisableWebUI {
-		routes.RegisterUIRoutes(app, application.BackendConfigLoader, application.ModelLoader, application.ApplicationConfig, application.GalleryService, auth)
+		routes.RegisterUIRoutes(app, application.BackendConfigLoader, application.ModelLoader, application.ApplicationConfig, application.GalleryService)
 	}
 
 	httpFS := http.FS(embedDirStatic)

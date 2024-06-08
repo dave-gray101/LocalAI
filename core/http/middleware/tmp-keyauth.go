@@ -1,4 +1,6 @@
-// TODO: I'm trying to upstream this middleware to fiber. In the meantime, this is a copy of fiber's keyauth, with my patch applied.
+// TODO: I'm trying to upstream this middleware to fiber.
+// Ideally, this file will be removed.
+// In the meantime, this is a copy of fiber's keyauth, with my patch applied.
 
 // Special thanks to Echo: https://github.com/labstack/echo/blob/master/middleware/key_auth.go
 package middleware
@@ -25,7 +27,7 @@ const (
 type extractorFunc func(c *fiber.Ctx) (string, error)
 
 // New creates a new middleware handler
-func NewTmpKeyAuth(config ...keyauth.Config) fiber.Handler {
+func NewKeyAuth(config ...keyauth.Config) fiber.Handler {
 	// Init config
 	cfg := configDefault(config...)
 

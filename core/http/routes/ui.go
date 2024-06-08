@@ -24,8 +24,7 @@ func RegisterUIRoutes(app *fiber.App,
 	cl *config.BackendConfigLoader,
 	ml *model.ModelLoader,
 	appConfig *config.ApplicationConfig,
-	galleryService *services.GalleryService,
-	auth func(*fiber.Ctx) error) {
+	galleryService *services.GalleryService) {
 
 	// keeps the state of models that are being installed from the UI
 	var processingModels = xsync.NewSyncedMap[string, string]()
@@ -50,10 +49,10 @@ func RegisterUIRoutes(app *fiber.App,
 		return processingModelsData, taskTypes
 	}
 
-	app.Get("/", auth, localai.WelcomeEndpoint(appConfig, cl, ml, modelStatus))
+	app.Get("/", localai.WelcomeEndpoint(appConfig, cl, ml, modelStatus))
 
 	// Show the Models page (all models)
-	app.Get("/browse", auth, func(c *fiber.Ctx) error {
+	app.Get("/browse", func(c *fiber.Ctx) error {
 		term := c.Query("term")
 
 		models, _ := gallery.AvailableGalleryModels(appConfig.Galleries, appConfig.ModelPath)
@@ -96,7 +95,7 @@ func RegisterUIRoutes(app *fiber.App,
 
 	// Show the models, filtered from the user input
 	// https://htmx.org/examples/active-search/
-	app.Post("/browse/search/models", auth, func(c *fiber.Ctx) error {
+	app.Post("/browse/search/models", func(c *fiber.Ctx) error {
 		form := struct {
 			Search string `form:"search"`
 		}{}
@@ -117,7 +116,7 @@ func RegisterUIRoutes(app *fiber.App,
 
 	// This route is used when the "Install" button is pressed, we submit here a new job to the gallery service
 	// https://htmx.org/examples/progress-bar/
-	app.Post("/browse/install/model/:id", auth, func(c *fiber.Ctx) error {
+	app.Post("/browse/install/model/:id", func(c *fiber.Ctx) error {
 		galleryID := strings.Clone(c.Params("id")) // note: strings.Clone is required for multiple requests!
 		log.Debug().Msgf("UI job submitted to install  : %+v\n", galleryID)
 
@@ -144,7 +143,7 @@ func RegisterUIRoutes(app *fiber.App,
 
 	// This route is used when the "Install" button is pressed, we submit here a new job to the gallery service
 	// https://htmx.org/examples/progress-bar/
-	app.Post("/browse/delete/model/:id", auth, func(c *fiber.Ctx) error {
+	app.Post("/browse/delete/model/:id", func(c *fiber.Ctx) error {
 		galleryID := strings.Clone(c.Params("id")) // note: strings.Clone is required for multiple requests!
 		log.Debug().Msgf("UI job submitted to delete  : %+v\n", galleryID)
 		var galleryName = galleryID
@@ -184,7 +183,7 @@ func RegisterUIRoutes(app *fiber.App,
 	// Display the job current progress status
 	// If the job is done, we trigger the /browse/job/:uid route
 	// https://htmx.org/examples/progress-bar/
-	app.Get("/browse/job/progress/:uid", auth, func(c *fiber.Ctx) error {
+	app.Get("/browse/job/progress/:uid", func(c *fiber.Ctx) error {
 		jobUID := strings.Clone(c.Params("uid")) // note: strings.Clone is required for multiple requests!
 
 		status := galleryService.GetStatus(jobUID)
@@ -206,7 +205,7 @@ func RegisterUIRoutes(app *fiber.App,
 
 	// this route is hit when the job is done, and we display the
 	// final state (for now just displays "Installation completed")
-	app.Get("/browse/job/:uid", auth, func(c *fiber.Ctx) error {
+	app.Get("/browse/job/:uid", func(c *fiber.Ctx) error {
 		jobUID := strings.Clone(c.Params("uid")) // note: strings.Clone is required for multiple requests!
 
 		status := galleryService.GetStatus(jobUID)
@@ -234,7 +233,7 @@ func RegisterUIRoutes(app *fiber.App,
 	})
 
 	// Show the Chat page
-	app.Get("/chat/:model", auth, func(c *fiber.Ctx) error {
+	app.Get("/chat/:model", func(c *fiber.Ctx) error {
 		backendConfigs := cl.GetAllBackendConfigs()
 
 		summary := fiber.Map{
@@ -247,7 +246,7 @@ func RegisterUIRoutes(app *fiber.App,
 		// Render index
 		return c.Render("views/chat", summary)
 	})
-	app.Get("/chat/", auth, func(c *fiber.Ctx) error {
+	app.Get("/chat/", func(c *fiber.Ctx) error {
 
 		backendConfigs := cl.GetAllBackendConfigs()
 
@@ -267,7 +266,7 @@ func RegisterUIRoutes(app *fiber.App,
 		return c.Render("views/chat", summary)
 	})
 
-	app.Get("/text2image/:model", auth, func(c *fiber.Ctx) error {
+	app.Get("/text2image/:model", func(c *fiber.Ctx) error {
 		backendConfigs := cl.GetAllBackendConfigs()
 
 		summary := fiber.Map{
@@ -281,7 +280,7 @@ func RegisterUIRoutes(app *fiber.App,
 		return c.Render("views/text2image", summary)
 	})
 
-	app.Get("/text2image/", auth, func(c *fiber.Ctx) error {
+	app.Get("/text2image/", func(c *fiber.Ctx) error {
 
 		backendConfigs := cl.GetAllBackendConfigs()
 
@@ -301,7 +300,7 @@ func RegisterUIRoutes(app *fiber.App,
 		return c.Render("views/text2image", summary)
 	})
 
-	app.Get("/tts/:model", auth, func(c *fiber.Ctx) error {
+	app.Get("/tts/:model", func(c *fiber.Ctx) error {
 		backendConfigs := cl.GetAllBackendConfigs()
 
 		summary := fiber.Map{
@@ -315,7 +314,7 @@ func RegisterUIRoutes(app *fiber.App,
 		return c.Render("views/tts", summary)
 	})
 
-	app.Get("/tts/", auth, func(c *fiber.Ctx) error {
+	app.Get("/tts/", func(c *fiber.Ctx) error {
 
 		backendConfigs := cl.GetAllBackendConfigs()
 
