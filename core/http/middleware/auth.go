@@ -95,5 +95,11 @@ func getApiKeyValidationFunction(applicationConfig *config.ApplicationConfig) fu
 		if len(applicationConfig.ApiKeys) == 0 {
 			return true, nil // If no keys are setup, accept everything
 		}
+		for _, validKey := range applicationConfig.ApiKeys {
+			if apiKey == validKey {
+				return true, nil
+			}
+		}
+		return false, keyauth.ErrMissingOrMalformedAPIKey
 	}
 }
