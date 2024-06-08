@@ -114,7 +114,15 @@ func App(application *core.Application) (*fiber.App, error) {
 		})
 	}
 
-	auth := middleware.GetAuth(application.ApplicationConfig)
+	// auth := middleware.GetAuth(application.ApplicationConfig)
+	// Dirty hack for quick test -- make the old auth useless, depend on the new one.
+	// if it works, full remove
+	auth := func(ctx *fiber.Ctx) error {
+		return ctx.Next()
+	}
+
+	app.Use(middleware.NewTmpKeyAuth(middleware.GetKeyAuthConfig(application.ApplicationConfig)))
+
 	requestExtractor := middleware.NewRequestExtractor(application.ModelLoader, application.ApplicationConfig)
 
 	if application.ApplicationConfig.CORS {
