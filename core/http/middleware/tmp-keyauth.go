@@ -7,11 +7,11 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/keyauth"
 )
 
 // When there is no request of the key thrown ErrMissingOrMalformedAPIKey
@@ -27,30 +27,33 @@ const (
 type extractorFunc func(c *fiber.Ctx) (string, error)
 
 // New creates a new middleware handler
-func NewKeyAuth(config ...keyauth.Config) fiber.Handler {
+func NewKeyAuth(config ...KAConfig) fiber.Handler {
 	// Init config
 	cfg := configDefault(config...)
 
 	// Initialize
 
-	parts := strings.Split(cfg.KeyLookup, "|")
-
 	var extractor extractorFunc
-	if len(parts) <= 1 {
-		extractor = parseSingleExtractor(cfg.KeyLookup, cfg.AuthScheme)
-	} else {
-		subExtractors := []extractorFunc{}
-		for _, keyLookup := range parts {
-			subExtractors = append(subExtractors, parseSingleExtractor(keyLookup, cfg.AuthScheme))
+	extractor, err := parseSingleExtractor(cfg.KeyLookup, cfg.AuthScheme)
+	if err != nil {
+		panic(fmt.Errorf("error creating middleware: invalid keyauth Config.KeyLookup: %w", err))
+	}
+	if len(cfg.AdditionalKeyLookups) > 0 {
+		subExtractors := map[string]extractorFunc{cfg.KeyLookup: extractor}
+		for _, keyLookup := range cfg.AdditionalKeyLookups {
+			subExtractors[keyLookup], err = parseSingleExtractor(keyLookup, cfg.AuthScheme)
+			if err != nil {
+				panic(fmt.Errorf("error creating middleware: invalid keyauth Config.AdditionalKeyLookups[%s]: %w", keyLookup, err))
+			}
 		}
 		extractor = func(c *fiber.Ctx) (string, error) {
-			for _, subExtractor := range subExtractors {
+			for keyLookup, subExtractor := range subExtractors {
 				res, err := subExtractor(c)
 				if err == nil && res != "" {
 					return res, nil
 				}
 				if !errors.Is(err, ErrMissingOrMalformedAPIKey) {
-					return "", err
+					return "", fmt.Errorf("[%s] %w", keyLookup, err)
 				}
 			}
 			return "", ErrMissingOrMalformedAPIKey
@@ -80,9 +83,12 @@ func NewKeyAuth(config ...keyauth.Config) fiber.Handler {
 	}
 }
 
-func parseSingleExtractor(keyLookup string, authScheme string) extractorFunc {
+func parseSingleExtractor(keyLookup string, authScheme string) (extractorFunc, error) {
 	parts := strings.Split(keyLookup, ":")
-	extractor := keyFromHeader(parts[1], authScheme)
+	if len(parts) <= 1 {
+		return nil, fmt.Errorf("invalid keyLookup")
+	}
+	extractor := keyFromHeader(parts[1], authScheme) // in the event of an invalid prefix, it is interpreted as header:
 	switch parts[0] {
 	case query:
 		extractor = keyFromQuery(parts[1])
@@ -93,7 +99,7 @@ func parseSingleExtractor(keyLookup string, authScheme string) extractorFunc {
 	case cookie:
 		extractor = keyFromCookie(parts[1])
 	}
-	return extractor
+	return extractor, nil
 }
 
 // keyFromHeader returns a function that extracts api key from the request header.
@@ -155,13 +161,69 @@ func keyFromCookie(name string) extractorFunc {
 	}
 }
 
-// from config.go ::
+// KAConfig defines the config for middleware.
+type KAConfig struct {
+	// Next defines a function to skip middleware.
+	// Optional. Default: nil
+	Next func(*fiber.Ctx) bool
+
+	// SuccessHandler defines a function which is executed for a valid key.
+	// Optional. Default: nil
+	SuccessHandler fiber.Handler
+
+	// ErrorHandler defines a function which is executed for an invalid key.
+	// It may be used to define a custom error.
+	// Optional. Default: 401 Invalid or expired key
+	ErrorHandler fiber.ErrorHandler
+
+	// KeyLookup is a string in the form of "<source>:<name>" that is used
+	// to extract key from the request.
+	// Optional. Default value "header:Authorization".
+	// Possible values:
+	// - "header:<name>"
+	// - "query:<name>"
+	// - "form:<name>"
+	// - "param:<name>"
+	// - "cookie:<name>"
+	KeyLookup string
+
+	// AdditionalKeyLookups is a slice of strings, containing secondary sources of keys if KeyLookup does not find one
+	// Each element should be a value used in KeyLookup
+	AdditionalKeyLookups []string
+
+	// AuthScheme to be used in the Authorization header.
+	// Optional. Default value "Bearer".
+	AuthScheme string
+
+	// Validator is a function to validate key.
+	Validator func(*fiber.Ctx, string) (bool, error)
+
+	// Context key to store the bearertoken from the token into context.
+	// Optional. Default: "token".
+	ContextKey interface{}
+}
+
+// ConfigDefault is the default config
+var ConfigDefault = KAConfig{
+	SuccessHandler: func(c *fiber.Ctx) error {
+		return c.Next()
+	},
+	ErrorHandler: func(c *fiber.Ctx, err error) error {
+		if errors.Is(err, ErrMissingOrMalformedAPIKey) {
+			return c.Status(fiber.StatusUnauthorized).SendString(err.Error())
+		}
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid or expired API Key")
+	},
+	KeyLookup:  "header:" + fiber.HeaderAuthorization,
+	AuthScheme: "Bearer",
+	ContextKey: "token",
+}
 
 // Helper function to set default values
-func configDefault(config ...keyauth.Config) keyauth.Config {
+func configDefault(config ...KAConfig) KAConfig {
 	// Return default config if nothing provided
 	if len(config) < 1 {
-		return keyauth.ConfigDefault
+		return ConfigDefault
 	}
 
 	// Override default config
@@ -169,23 +231,26 @@ func configDefault(config ...keyauth.Config) keyauth.Config {
 
 	// Set default values
 	if cfg.SuccessHandler == nil {
-		cfg.SuccessHandler = keyauth.ConfigDefault.SuccessHandler
+		cfg.SuccessHandler = ConfigDefault.SuccessHandler
 	}
 	if cfg.ErrorHandler == nil {
-		cfg.ErrorHandler = keyauth.ConfigDefault.ErrorHandler
+		cfg.ErrorHandler = ConfigDefault.ErrorHandler
 	}
 	if cfg.KeyLookup == "" {
-		cfg.KeyLookup = keyauth.ConfigDefault.KeyLookup
+		cfg.KeyLookup = ConfigDefault.KeyLookup
 		// set AuthScheme as "Bearer" only if KeyLookup is set to default.
 		if cfg.AuthScheme == "" {
-			cfg.AuthScheme = keyauth.ConfigDefault.AuthScheme
+			cfg.AuthScheme = ConfigDefault.AuthScheme
 		}
+	}
+	if cfg.AdditionalKeyLookups == nil {
+		cfg.AdditionalKeyLookups = []string{}
 	}
 	if cfg.Validator == nil {
 		panic("fiber: keyauth middleware requires a validator function")
 	}
 	if cfg.ContextKey == nil {
-		cfg.ContextKey = keyauth.ConfigDefault.ContextKey
+		cfg.ContextKey = ConfigDefault.ContextKey
 	}
 
 	return cfg

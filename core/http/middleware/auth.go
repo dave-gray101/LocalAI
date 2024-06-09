@@ -13,13 +13,14 @@ import (
 
 const CONTEXT_LOCALS_KEY_API_KEY = "API_KEY"
 
-func GetKeyAuthConfig(applicationConfig *config.ApplicationConfig) keyauth.Config {
-	return keyauth.Config{
-		KeyLookup:    "header:Authorization|header:x-api-key|header:xi-api-key",
-		Validator:    getApiKeyValidationFunction(applicationConfig),
-		ErrorHandler: getApiKeyErrorHandler(applicationConfig),
-		AuthScheme:   "Bearer",
-		ContextKey:   CONTEXT_LOCALS_KEY_API_KEY,
+func GetKeyAuthConfig(applicationConfig *config.ApplicationConfig) KAConfig {
+	return KAConfig{
+		KeyLookup:            "header:Authorization",
+		AdditionalKeyLookups: []string{"header:x-api-key", "header:xi-api-key"},
+		Validator:            getApiKeyValidationFunction(applicationConfig),
+		ErrorHandler:         getApiKeyErrorHandler(applicationConfig),
+		AuthScheme:           "Bearer",
+		ContextKey:           CONTEXT_LOCALS_KEY_API_KEY,
 	}
 }
 
