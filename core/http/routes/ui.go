@@ -246,6 +246,26 @@ func RegisterUIRoutes(app *fiber.App,
 		// Render index
 		return c.Render("views/chat", summary)
 	})
+
+	app.Get("/talk/", func(c *fiber.Ctx) error {
+		backendConfigs := cl.GetAllBackendConfigs()
+
+		if len(backendConfigs) == 0 {
+			// If no model is available redirect to the index which suggests how to install models
+			return c.Redirect("/")
+		}
+
+		summary := fiber.Map{
+			"Title":        "LocalAI - Talk",
+			"ModelsConfig": backendConfigs,
+			"Model":        backendConfigs[0].Name,
+			"Version":      internal.PrintableVersion(),
+		}
+
+		// Render index
+		return c.Render("views/talk", summary)
+	})
+
 	app.Get("/chat/", func(c *fiber.Ctx) error {
 
 		backendConfigs := cl.GetAllBackendConfigs()
