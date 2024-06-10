@@ -9,19 +9,22 @@ import (
 )
 
 // This file contains the configuration generators and handler functions that are used along with the fiber/keyauth middleware
-// Currently this requires an upstream patch - tmp-keyauth.go contains temporary code that will be removed if my patch is accepted.
+// Currently this requires an upstream patch - and feature patches are no longer accepted to v2
+// Therefore tmp-keyauth.go contains the v2 implementation of the middleware until v3 stabilizes and we migrate.
 
-const CONTEXT_LOCALS_KEY_API_KEY = "API_KEY"
+func GetKeyAuthConfig(applicationConfig *config.ApplicationConfig) (*KAConfig, error) {
+	customLookup, err := MultipleKeySourceLookup([]string{"header:Authorization", "header:x-api-key", "header:xi-api-key"}, keyauth.ConfigDefault.AuthScheme)
 
-func GetKeyAuthConfig(applicationConfig *config.ApplicationConfig) KAConfig {
-	return KAConfig{
-		KeyLookup:            "header:Authorization",
-		AdditionalKeyLookups: []string{"header:x-api-key", "header:xi-api-key"},
-		Validator:            getApiKeyValidationFunction(applicationConfig),
-		ErrorHandler:         getApiKeyErrorHandler(applicationConfig),
-		AuthScheme:           "Bearer",
-		ContextKey:           CONTEXT_LOCALS_KEY_API_KEY,
+	if err != nil {
+		return nil, err
 	}
+
+	return &KAConfig{
+		CustomKeyLookup: customLookup,
+		Validator:       getApiKeyValidationFunction(applicationConfig),
+		ErrorHandler:    getApiKeyErrorHandler(applicationConfig),
+		AuthScheme:      "Bearer",
+	}, nil
 }
 
 func getApiKeyErrorHandler(applicationConfig *config.ApplicationConfig) fiber.ErrorHandler {

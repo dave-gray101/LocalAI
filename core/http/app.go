@@ -114,7 +114,12 @@ func App(application *core.Application) (*fiber.App, error) {
 		})
 	}
 
-	app.Use(middleware.NewKeyAuth(middleware.GetKeyAuthConfig(application.ApplicationConfig)))
+	kaConfig, err := middleware.GetKeyAuthConfig(application.ApplicationConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	app.Use(middleware.NewKeyAuth(*kaConfig))
 
 	requestExtractor := middleware.NewRequestExtractor(application.ModelLoader, application.ApplicationConfig)
 
