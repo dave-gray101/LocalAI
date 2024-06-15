@@ -5,7 +5,7 @@ BINARY_NAME=local-ai
 
 # llama.cpp versions
 GOLLAMA_STABLE_VERSION?=2b57a8ae43e4699d3dc5d1496a1ccd42922993be
-CPPLLAMA_VERSION?=d4d915d351d1f1270d56184bdd46672893e8a5d8
+CPPLLAMA_VERSION?=f8ec8877b75774fc6c47559d529dac423877bcad
 
 # gpt4all version
 GPT4ALL_REPO?=https://github.com/nomic-ai/gpt4all
@@ -16,7 +16,7 @@ RWKV_REPO?=https://github.com/donomii/go-rwkv.cpp
 RWKV_VERSION?=661e7ae26d442f5cfebd2a0881b44e8c55949ec6
 
 # whisper.cpp version
-WHISPER_CPP_VERSION?=87acd6d629461ff48c3d58a504ea797736d4b070
+WHISPER_CPP_VERSION?=b29b3b29240aac8b71ce8e5a4360c1f1562ad66f
 
 # bert.cpp version
 BERT_VERSION?=710044b124545415f555e4260d16b146c725a6e4
@@ -313,6 +313,10 @@ build: prepare backend-assets grpcs ## Build the project
 	$(info ${GREEN}I BUILD_TYPE: ${YELLOW}$(BUILD_TYPE)${RESET})
 	$(info ${GREEN}I GO_TAGS: ${YELLOW}$(GO_TAGS)${RESET})
 	$(info ${GREEN}I LD_FLAGS: ${YELLOW}$(LD_FLAGS)${RESET})
+ifneq ($(BACKEND_LIBS),)
+	$(MAKE) backend-assets/lib
+	cp -r $(BACKEND_LIBS) backend-assets/lib/
+endif
 	CGO_LDFLAGS="$(CGO_LDFLAGS)" $(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o $(BINARY_NAME) ./
 
 build-minimal:
@@ -321,17 +325,20 @@ build-minimal:
 build-api:
 	BUILD_GRPC_FOR_BACKEND_LLAMA=true BUILD_API_ONLY=true GO_TAGS=none $(MAKE) build
 
+backend-assets/lib:
+	mkdir -p backend-assets/lib
+
 dist:
-	STATIC=true $(MAKE) backend-assets/grpc/llama-cpp-avx2
+	$(MAKE) backend-assets/grpc/llama-cpp-avx2
 ifeq ($(OS),Darwin)
-	$(info ${GREEN}I Skip CUDA build on MacOS${RESET})
+	$(info ${GREEN}I Skip CUDA/hipblas build on MacOS${RESET})
 else
 	$(MAKE) backend-assets/grpc/llama-cpp-cuda
 	$(MAKE) backend-assets/grpc/llama-cpp-hipblas
 	$(MAKE) backend-assets/grpc/llama-cpp-sycl_f16
 	$(MAKE) backend-assets/grpc/llama-cpp-sycl_f32
 endif
-	$(MAKE) build
+	STATIC=true $(MAKE) build
 	mkdir -p release
 # if BUILD_ID is empty, then we don't append it to the binary name
 ifeq ($(BUILD_ID),)
@@ -340,6 +347,19 @@ ifeq ($(BUILD_ID),)
 else
 	cp $(BINARY_NAME) release/$(BINARY_NAME)-$(BUILD_ID)-$(OS)-$(ARCH)
 	shasum -a 256 release/$(BINARY_NAME)-$(BUILD_ID)-$(OS)-$(ARCH) > release/$(BINARY_NAME)-$(BUILD_ID)-$(OS)-$(ARCH).sha256
+endif
+
+dist-cross-linux-arm64: 
+	CMAKE_ARGS="$(CMAKE_ARGS) -DLLAMA_NATIVE=off" GRPC_BACKENDS="backend-assets/grpc/llama-cpp-fallback backend-assets/grpc/llama-cpp-grpc backend-assets/util/llama-cpp-rpc-server" \
+	STATIC=true $(MAKE) build
+	mkdir -p release
+# if BUILD_ID is empty, then we don't append it to the binary name
+ifeq ($(BUILD_ID),)
+	cp $(BINARY_NAME) release/$(BINARY_NAME)-$(OS)-arm64
+	shasum -a 256 release/$(BINARY_NAME)-$(OS)-arm64 > release/$(BINARY_NAME)-$(OS)-arm64.sha256
+else
+	cp $(BINARY_NAME) release/$(BINARY_NAME)-$(BUILD_ID)-$(OS)-arm64
+	shasum -a 256 release/$(BINARY_NAME)-$(BUILD_ID)-$(OS)-arm64 > release/$(BINARY_NAME)-$(BUILD_ID)-$(OS)-arm64.sha256
 endif
 
 osx-signed: build
@@ -824,3 +844,21 @@ swagger:
 .PHONY: gen-assets
 gen-assets:
 	$(GOCMD) run core/dependencies_manager/manager.go embedded/webui_static.yaml core/http/static/assets
+
+## Documentation
+docs/layouts/_default: 
+	mkdir -p docs/layouts/_default
+
+docs/static/gallery.html: docs/layouts/_default
+	$(GOCMD) run ./.github/ci/modelslist.go ./gallery/index.yaml > docs/static/gallery.html
+
+docs/public: docs/layouts/_default docs/static/gallery.html
+	cd docs && hugo --minify
+
+docs-clean:
+	rm -rf docs/public
+	rm -rf docs/static/gallery.html
+
+.PHONY: docs
+docs: docs/static/gallery.html
+	cd docs && hugo serve
