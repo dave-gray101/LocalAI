@@ -211,11 +211,21 @@ func (r *RunCMD) Run(ctx *cliContext.Context) error {
 		return fmt.Errorf("failed basic startup tasks with error %s", err.Error())
 	}
 
+	shutdownMetrics, err := startup.InitializeMetricsProviders(nil)
+
 	appHTTP, err := http.App(cl, ml, options)
 	if err != nil {
 		log.Error().Err(err).Msg("error during HTTP App construction")
 		return err
 	}
+
+	appHTTP.Hooks().OnShutdown(func() error {
+		err := shutdownMetrics()
+		if err != nil {
+			log.Error().Err(err).Msg("error shutting down metrics")
+		}
+		return err
+	})
 
 	return appHTTP.Listen(r.Address)
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/mudler/LocalAI/pkg/utils"
 
-	"github.com/mudler/LocalAI/core/http/endpoints/localai"
 	"github.com/mudler/LocalAI/core/http/endpoints/openai"
 	"github.com/mudler/LocalAI/core/http/routes"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/mudler/LocalAI/pkg/model"
 
 	"github.com/gofiber/contrib/fiberzerolog"
+	"github.com/gofiber/contrib/otelfiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
@@ -125,17 +125,10 @@ func App(cl *config.BackendConfigLoader, ml *model.ModelLoader, appConfig *confi
 		app.Use(recover.New())
 	}
 
-	metricsService, err := services.NewLocalAIMetricsService()
-	if err != nil {
-		return nil, err
-	}
-
-	if metricsService != nil {
-		app.Use(localai.LocalAIMetricsAPIMiddleware(metricsService))
-		app.Hooks().OnShutdown(func() error {
-			return metricsService.Shutdown()
-		})
-	}
+	// Register metrics middleware
+	app.Use(otelfiber.Middleware(otelfiber.WithNext(func(ctx *fiber.Ctx) bool {
+		return ctx.Path() == "/metrics"
+	})))
 
 	// Auth middleware checking if API key is valid. If no API key is set, no auth is required.
 	auth := func(c *fiber.Ctx) error {
