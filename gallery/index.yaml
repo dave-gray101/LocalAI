@@ -2696,39 +2696,6 @@
     - filename: Qwentile2.5-32B-Instruct-Q4_K_M.gguf
       sha256: e476d6e3c15c78fc3f986d7ae8fa35c16116843827f2e6243c05767cef2f3615
       uri: huggingface://bartowski/Qwentile2.5-32B-Instruct-GGUF/Qwentile2.5-32B-Instruct-Q4_K_M.gguf
-- !!merge <<: *qwen25
-  name: "deepseek-r1-distill-qwen-1.5b"
-  icon: "https://avatars.githubusercontent.com/u/148330874"
-  urls:
-    - https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5b
-    - https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF
-  description: |
-    DeepSeek-R1 is our advanced first-generation reasoning model designed to enhance performance in reasoning tasks.
-    Building on the foundation laid by its predecessor, DeepSeek-R1-Zero, which was trained using large-scale reinforcement learning (RL) without supervised fine-tuning, DeepSeek-R1 addresses the challenges faced by R1-Zero, such as endless repetition, poor readability, and language mixing.
-    By incorporating cold-start data prior to the RL phase,DeepSeek-R1 significantly improves reasoning capabilities and achieves performance levels comparable to OpenAI-o1 across a variety of domains, including mathematics, coding, and complex reasoning tasks.
-  overrides:
-    parameters:
-      model: deepseek-r1-distill-qwen-1.5b-Q4_K_M.gguf
-  files:
-    - filename: deepseek-r1-distill-qwen-1.5b-Q4_K_M.gguf
-      sha256: c2c43b6018cf7700ce0ddee8807deb1a9a26758ef878232f3a142d16df81f0fe
-      uri: huggingface://unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf
-- !!merge <<: *qwen25
-  name: "deepseek-r1-distill-qwen-7b"
-  urls:
-    - https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
-    - https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF
-  description: |
-    DeepSeek-R1 is our advanced first-generation reasoning model designed to enhance performance in reasoning tasks.
-    Building on the foundation laid by its predecessor, DeepSeek-R1-Zero, which was trained using large-scale reinforcement learning (RL) without supervised fine-tuning, DeepSeek-R1 addresses the challenges faced by R1-Zero, such as endless repetition, poor readability, and language mixing.
-    By incorporating cold-start data prior to the RL phase,DeepSeek-R1 significantly improves reasoning capabilities and achieves performance levels comparable to OpenAI-o1 across a variety of domains, including mathematics, coding, and complex reasoning tasks.
-  overrides:
-    parameters:
-      model: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
-  files:
-    - filename: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
-      sha256: 731ece8d06dc7eda6f6572997feb9ee1258db0784827e642909d9b565641937b
-      uri: huggingface://bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
 - &archfunct
   license: apache-2.0
   tags:
@@ -5334,6 +5301,86 @@
     - filename: archangel_sft_pythia2-8b.Q4_K_M.gguf
       sha256: a47782c55ef2b39b19644213720a599d9849511a73c9ebb0c1de749383c0a0f8
       uri: huggingface://RichardErkhov/ContextualAI_-_archangel_sft_pythia2-8b-gguf/archangel_sft_pythia2-8b.Q4_K_M.gguf
+- &deepseek-r1  ## Start DeepSeek-R1
+  url: "github:mudler/LocalAI/gallery/chatml.yaml@master"
+  name: "deepseek-r1-distill-qwen-1.5b"
+  icon: "https://avatars.githubusercontent.com/u/148330874"
+  urls:
+    - https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5b
+    - https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF
+  description: |
+    DeepSeek-R1 is our advanced first-generation reasoning model designed to enhance performance in reasoning tasks.
+    Building on the foundation laid by its predecessor, DeepSeek-R1-Zero, which was trained using large-scale reinforcement learning (RL) without supervised fine-tuning, DeepSeek-R1 addresses the challenges faced by R1-Zero, such as endless repetition, poor readability, and language mixing.
+    By incorporating cold-start data prior to the RL phase,DeepSeek-R1 significantly improves reasoning capabilities and achieves performance levels comparable to OpenAI-o1 across a variety of domains, including mathematics, coding, and complex reasoning tasks.
+  overrides:
+    parameters:
+      model: DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf
+  files:
+    - filename: DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf
+      sha256: 1741e5b2d062b07acf048bf0d2c514dadf2a48f94e2b4aa0cfe069af3838ee2f
+      uri: huggingface://bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf
+- !!merge <<: *deepseek-r1
+  name: "deepseek-r1-distill-qwen-7b"
+  urls:
+    - https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+    - https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF
+  overrides:
+    parameters:
+      model: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
+  files:
+    - filename: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
+      sha256: 731ece8d06dc7eda6f6572997feb9ee1258db0784827e642909d9b565641937b
+      uri: huggingface://bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
+- !!merge <<: *deepseek-r1
+  name: "deepseek-r1-distill-qwen-14b"
+  urls:
+    - https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B
+    - https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF
+  overrides:
+    parameters:
+      model: DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
+  files:
+    - filename: DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
+      sha256: 0b319bd0572f2730bfe11cc751defe82045fad5085b4e60591ac2cd2d9633181
+      uri: huggingface://bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
+- !!merge <<: *deepseek-r1
+  name: "deepseek-r1-distill-qwen-32b"
+  urls:
+    - https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+    - https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-32B-GGUF
+  overrides:
+    parameters:
+      model: DeepSeek-R1-Distill-Qwen-32B-Q4_K_M.gguf
+  files:
+    - filename: DeepSeek-R1-Distill-Qwen-32B-Q4_K_M.gguf
+      sha256: bed9b0f551f5b95bf9da5888a48f0f87c37ad6b72519c4cbd775f54ac0b9fc62
+      uri: huggingface://bartowski/DeepSeek-R1-Distill-Qwen-32B-GGUF/DeepSeek-R1-Distill-Qwen-32B-Q4_K_M.gguf
+- !!merge <<: *deepseek-r1
+  name: "deepseek-r1-distill-llama-8b"
+  icon: "https://avatars.githubusercontent.com/u/148330874"
+  urls:
+    - https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+    - https://huggingface.co/bartowski/DeepSeek-R1-Distill-Llama-8B-GGUF
+  overrides:
+    parameters:
+      model: DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
+  files:
+    - filename: DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
+      sha256: 87bcba20b4846d8dadf753d3ff48f9285d131fc95e3e0e7e934d4f20bc896f5d
+      uri: huggingface://bartowski/DeepSeek-R1-Distill-Llama-8B-GGUF/DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
+- !!merge <<: *deepseek-r1
+  name: "deepseek-r1-distill-llama-70b"
+  icon: "https://avatars.githubusercontent.com/u/148330874"
+  urls:
+    - https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+    - https://huggingface.co/bartowski/DeepSeek-R 1-Distill-Llama-70B-GGUF
+  overrides:
+    parameters:
+      model: DeepSeek-R1-Distill-Llama-70B-Q4_K_M.gguf
+  files:
+    - filename: DeepSeek-R1-Distill-Llama-70B-Q4_K_M.gguf
+      sha256: 181a82a1d6d2fa24fe4db83a68eee030384986bdbdd4773ba76424e3a6eb9fd8
+      uri: huggingface://bartowski/DeepSeek-R1-Distill-Llama-70B-GGUF/DeepSeek-R1-Distill-Llama-70B-Q4_K_M.gguf
 - &qwen2  ## Start QWEN2
   url: "github:mudler/LocalAI/gallery/chatml.yaml@master"
   name: "qwen2-7b-instruct"
@@ -5667,6 +5714,32 @@
     - filename: marco-o1-uncensored.Q4_K_M.gguf
       sha256: ad0440270a7254098f90779744d3e5b34fe49b7baf97c819909ba9c5648cc0d9
       uri: huggingface://QuantFactory/marco-o1-uncensored-GGUF/marco-o1-uncensored.Q4_K_M.gguf
+- !!merge <<: *qwen2
+  name: "minicpm-o-2_6"
+  icon: https://avatars.githubusercontent.com/u/89920203
+  urls:
+    - https://huggingface.co/openbmb/MiniCPM-o-2_6-gguf
+    - https://huggingface.co/openbmb/MiniCPM-o-2_6
+  description: |
+    MiniCPM-o 2.6 is the latest and most capable model in the MiniCPM-o series. The model is built in an end-to-end fashion based on SigLip-400M, Whisper-medium-300M, ChatTTS-200M, and Qwen2.5-7B with a total of 8B parameters
+  tags:
+    - llm
+    - multimodal
+    - gguf
+    - gpu
+    - qwen2
+    - cpu
+  overrides:
+    mmproj: minicpm-o-2_6-mmproj-f16.gguf
+    parameters:
+      model: minicpm-o-2_6-Q4_K_M.gguf
+  files:
+    - filename: minicpm-o-2_6-Q4_K_M.gguf
+      sha256: 4f635fc0c0bb88d50ccd9cf1f1e5892b5cb085ff88fe0d8e1148fd9a8a836bc2
+      uri: huggingface://openbmb/MiniCPM-o-2_6-gguf/Model-7.6B-Q4_K_M.gguf
+    - filename: minicpm-o-2_6-mmproj-f16.gguf
+      sha256: efa4f7d96aa0f838f2023fc8d28e519179b16f1106777fa9280b32628191aa3e
+      uri: huggingface://openbmb/MiniCPM-o-2_6-gguf/mmproj-model-f16.gguf
 - !!merge <<: *qwen2
   name: "minicpm-v-2_6"
   license: apache-2.0
@@ -11064,7 +11137,7 @@
       uri: huggingface://Lykon/DreamShaper/DreamShaper_8_pruned.safetensors
       sha256: 879db523c30d3b9017143d56705015e15a2cb5628762c11d086fed9538abd7fd
 - name: stable-diffusion-3-medium
-  icon: https://huggingface.co/leo009/stable-diffusion-3-medium/resolve/main/sd3demo.jpg
+  icon: https://avatars.githubusercontent.com/u/100950301
   license: other
   description: |
     Stable Diffusion 3 Medium is a Multimodal Diffusion Transformer (MMDiT) text-to-image model that features greatly improved performance in image quality, typography, complex prompt understanding, and resource-efficiency.
@@ -11078,6 +11151,63 @@
     - sd-3
     - gpu
   url: "github:mudler/LocalAI/gallery/stablediffusion3.yaml@master"
+- name: sd-1.5-ggml
+  icon: https://avatars.githubusercontent.com/u/37351293
+  license: creativeml-openrail-m
+  url: "github:mudler/LocalAI/gallery/sd-ggml.yaml@master"
+  description: |
+    Stable Diffusion 1.5
+  urls:
+    - https://huggingface.co/second-state/stable-diffusion-v1-5-GGUF
+  tags:
+    - text-to-image
+    - stablediffusion
+    - gpu
+    - cpu
+  overrides:
+    options:
+      - "sampler:euler"
+    parameters:
+      model: stable-diffusion-v1-5-pruned-emaonly-Q4_0.gguf
+  files:
+    - filename: "stable-diffusion-v1-5-pruned-emaonly-Q4_0.gguf"
+      sha256: "b8944e9fe0b69b36ae1b5bb0185b3a7b8ef14347fe0fa9af6c64c4829022261f"
+      uri: "huggingface://second-state/stable-diffusion-v1-5-GGUF/stable-diffusion-v1-5-pruned-emaonly-Q4_0.gguf"
+- name: sd-3.5-medium-ggml
+  license: stabilityai-ai-community
+  url: "github:mudler/LocalAI/gallery/sd-ggml.yaml@master"
+  description: |
+    Stable Diffusion 3.5 Medium is a Multimodal Diffusion Transformer (MMDiT) text-to-image model that features improved performance in image quality, typography, complex prompt understanding, and resource-efficiency.
+  urls:
+    - https://huggingface.co/stabilityai/stable-diffusion-3.5-medium
+    - https://huggingface.co/second-state/stable-diffusion-3.5-medium-GGUF
+  tags:
+    - text-to-image
+    - stablediffusion
+    - gpu
+    - cpu
+  icon: https://avatars.githubusercontent.com/u/100950301
+  overrides:
+    options:
+      - "clip_l_path:clip_l-Q4_0.gguf"
+      - "clip_g_path:clip_g-Q4_0.gguf"
+      - "t5xxl_path:t5xxl-Q4_0.gguf"
+      - "sampler:euler"
+    parameters:
+      model: sd3.5_medium-Q4_0.gguf
+  files:
+    - filename: "sd3.5_medium-Q4_0.gguf"
+      sha256: "3bb8c5e9ab0a841117089ed4ed81d885bb85161df2a766b812f829bc55b31adf"
+      uri: "huggingface://second-state/stable-diffusion-3.5-medium-GGUF/sd3.5_medium-Q4_0.gguf"
+    - filename: clip_g-Q4_0.gguf
+      sha256: c142411147e16b7c4b9cc1f5d977cbe596104435d76fde47172d3d35c5e58bb8
+      uri: huggingface://second-state/stable-diffusion-3.5-medium-GGUF/clip_g-Q4_0.gguf
+    - filename: clip_l-Q4_0.gguf
+      sha256: f5ad88ae2ac924eb4ac0298b77afa304b5e6014fc0c4128f0e3df40fdfcc0f8a
+      uri: huggingface://second-state/stable-diffusion-3.5-medium-GGUF/clip_l-Q4_0.gguf
+    - filename: t5xxl-Q4_0.gguf
+      sha256: 987ba47c158b890c274f78fd35324419f50941e846a49789f0977e9fe9d97ab7
+      uri: huggingface://second-state/stable-diffusion-3.5-medium-GGUF/t5xxl-Q4_0.gguf
 - name: sd-3.5-large-ggml
   license: stabilityai-ai-community
   url: "github:mudler/LocalAI/gallery/sd-ggml.yaml@master"
@@ -11088,10 +11218,10 @@
     - https://huggingface.co/second-state/stable-diffusion-3.5-large-GGUF
   tags:
     - text-to-image
-    - flux
+    - stablediffusion
     - gpu
     - cpu
-  icon: https://huggingface.co/stabilityai/stable-diffusion-3.5-large/media/main/sd3.5_large_demo.png
+  icon: https://avatars.githubusercontent.com/u/100950301
   overrides:
     parameters:
       model: sd3.5_large-Q4_0.gguf
@@ -11110,6 +11240,7 @@
       uri: huggingface://second-state/stable-diffusion-3.5-large-GGUF/t5xxl-Q5_0.gguf
 - &flux
   name: flux.1-dev
+  icon: https://avatars.githubusercontent.com/u/164064024
   license: flux-1-dev-non-commercial-license
   description: |
     FLUX.1 [dev] is a 12 billion parameter rectified flow transformer capable of generating images from text descriptions. For more information, please read our blog post.
@@ -11133,7 +11264,6 @@
 - !!merge <<: *flux
   name: flux.1-schnell
   license: apache-2
-  icon: https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/schnell_grid.jpeg
   description: |
     FLUX.1 [schnell] is a 12 billion parameter rectified flow transformer capable of generating images from text descriptions. For more information, please read our blog post.
     Key Features
@@ -11166,7 +11296,6 @@
     - flux
     - gpu
     - cpu
-  icon: https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/schnell_grid.jpeg
   overrides:
     parameters:
       model: flux1-dev-Q2_K.gguf
@@ -11186,6 +11315,7 @@
 - &whisper  ## Whisper
   url: "github:mudler/LocalAI/gallery/whisper-base.yaml@master"
   name: "whisper-1"
+  icon: https://avatars.githubusercontent.com/u/14957082
   license: "MIT"
   urls:
     - https://github.com/ggerganov/whisper.cpp
@@ -11363,6 +11493,7 @@
   description: |
     Stable Diffusion in NCNN with c++, supported txt2img and img2img
   name: stablediffusion-cpp
+  icon: https://avatars.githubusercontent.com/u/100950301
 - &piper  ## Piper TTS
   url: github:mudler/LocalAI/gallery/piper.yaml@master
   name: voice-en-us-kathleen-low
@@ -11943,6 +12074,7 @@
       uri: https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-zh_CN-huayan-medium.tar.gz
       sha256: 0299a5e7f481ba853404e9f0e1515a94d5409585d76963fa4d30c64bd630aa99
 - name: "silero-vad"
+  icon: https://github.com/snakers4/silero-models/raw/master/files/silero_logo.jpg
   url: github:mudler/LocalAI/gallery/virtual.yaml@master
   urls:
     - https://github.com/snakers4/silero-vad
@@ -11962,6 +12094,7 @@
       uri: https://huggingface.co/onnx-community/silero-vad/resolve/main/onnx/model.onnx
       sha256: a4a068cd6cf1ea8355b84327595838ca748ec29a25bc91fc82e6c299ccdc5808
 - name: "bark-cpp-small"
+  icon: https://avatars.githubusercontent.com/u/99442120
   url: github:mudler/LocalAI/gallery/virtual.yaml@master
   license: mit
   urls:

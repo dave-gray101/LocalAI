@@ -72,7 +72,7 @@ func ImageEndpoint(cl *config.BackendConfigLoader, ml *model.ModelLoader, appCon
 			log.Error().Msg("Image Endpoint - Invalid Input")
 			return fiber.ErrBadRequest
 		}
-
+		
 		config, ok := c.Locals(middleware.CONTEXT_LOCALS_KEY_MODEL_CONFIG).(*config.BackendConfig)
 		if !ok || config == nil {
 			log.Error().Msg("Image Endpoint - Invalid Config")
@@ -128,9 +128,9 @@ func ImageEndpoint(cl *config.BackendConfigLoader, ml *model.ModelLoader, appCon
 
 		switch config.Backend {
 		case "stablediffusion":
-			config.Backend = model.StableDiffusionBackend
+			config.Backend = model.StableDiffusionGGMLBackend
 		case "":
-			config.Backend = model.StableDiffusionBackend
+			config.Backend = model.StableDiffusionGGMLBackend
 		}
 
 		if !strings.Contains(input.Size, "x") {

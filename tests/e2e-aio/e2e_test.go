@@ -122,8 +122,9 @@ var _ = Describe("E2E test", func() {
 		Context("images", func() {
 			It("correctly", func() {
 				req := openai.ImageRequest{
-					Prompt: "test",
-					Size:   openai.CreateImageSize512x512,
+					Prompt:  "test",
+					Quality: "1",
+					Size:    openai.CreateImageSize512x512,
 				}
 				resp, err := client.CreateImage(context.TODO(), req)
 				Expect(err).ToNot(HaveOccurred(), fmt.Sprintf("error sending image request %+v", req))
@@ -134,7 +135,8 @@ var _ = Describe("E2E test", func() {
 				resp, err := client.CreateImage(context.TODO(),
 					openai.ImageRequest{
 						Prompt:         "test",
-						Size:           openai.CreateImageSize512x512,
+						Size:           openai.CreateImageSize256x256,
+						Quality:        "1",
 						ResponseFormat: openai.CreateImageResponseFormatURL,
 					},
 				)
@@ -146,7 +148,8 @@ var _ = Describe("E2E test", func() {
 				resp, err := client.CreateImage(context.TODO(),
 					openai.ImageRequest{
 						Prompt:         "test",
-						Size:           openai.CreateImageSize512x512,
+						Size:           openai.CreateImageSize256x256,
+						Quality:        "1",
 						ResponseFormat: openai.CreateImageResponseFormatB64JSON,
 					},
 				)

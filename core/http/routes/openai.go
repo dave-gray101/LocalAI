@@ -108,7 +108,7 @@ func RegisterOpenAIRoutes(app *fiber.App,
 
 	// images
 	app.Post("/v1/images/generations",
-		re.BuildConstantDefaultModelNameMiddleware(model.StableDiffusionBackend),
+		re.BuildConstantDefaultModelNameMiddleware(model.StableDiffusionGGMLBackend),
 		re.SetModelAndConfig(func() schema.LocalAIRequest { return new(schema.OpenAIRequest) }),
 		re.SetOpenAIRequest,
 		openai.ImageEndpoint(application.BackendLoader(), application.ModelLoader(), application.ApplicationConfig()))

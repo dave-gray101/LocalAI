@@ -8,7 +8,7 @@ DETECT_LIBS?=true
 # llama.cpp versions
 GOLLAMA_REPO?=https://github.com/go-skynet/go-llama.cpp
 GOLLAMA_VERSION?=2b57a8ae43e4699d3dc5d1496a1ccd42922993be
-CPPLLAMA_VERSION?=aea8ddd5165d525a449e2fc3839db77a71f4a318
+CPPLLAMA_VERSION?=c5d9effb49649db80a52caf5c0626de6f342f526
 
 # whisper.cpp version
 WHISPER_REPO?=https://github.com/ggerganov/whisper.cpp
@@ -17,10 +17,6 @@ WHISPER_CPP_VERSION?=6266a9f9e56a5b925e9892acf650f3eb1245814d
 # go-piper version
 PIPER_REPO?=https://github.com/mudler/go-piper
 PIPER_VERSION?=e10ca041a885d4a8f3871d52924b47792d5e5aa0
-
-# stablediffusion version
-STABLEDIFFUSION_REPO?=https://github.com/mudler/go-stable-diffusion
-STABLEDIFFUSION_VERSION?=4a3cd6aeae6f66ee57eae9a0075f8c58c3a6a38f
 
 # bark.cpp
 BARKCPP_REPO?=https://github.com/PABannier/bark.cpp.git
@@ -179,11 +175,6 @@ ifeq ($(STATIC),true)
 	LD_FLAGS+=-linkmode external -extldflags -static
 endif
 
-ifeq ($(findstring stablediffusion,$(GO_TAGS)),stablediffusion)
-#	OPTIONAL_TARGETS+=go-stable-diffusion/libstablediffusion.a
-	OPTIONAL_GRPC+=backend-assets/grpc/stablediffusion
-endif
-
 ifeq ($(findstring tts,$(GO_TAGS)),tts)
 #	OPTIONAL_TARGETS+=go-piper/libpiper_binding.a
 #	OPTIONAL_TARGETS+=backend-assets/espeak-ng-data
@@ -195,6 +186,7 @@ endif
 ALL_GRPC_BACKENDS=backend-assets/grpc/huggingface
 ALL_GRPC_BACKENDS+=backend-assets/grpc/llama-cpp-avx
 ALL_GRPC_BACKENDS+=backend-assets/grpc/llama-cpp-avx2
+ALL_GRPC_BACKENDS+=backend-assets/grpc/llama-cpp-avx512
 ALL_GRPC_BACKENDS+=backend-assets/grpc/llama-cpp-fallback
 ALL_GRPC_BACKENDS+=backend-assets/grpc/llama-ggml
 ALL_GRPC_BACKENDS+=backend-assets/grpc/llama-cpp-grpc
@@ -273,19 +265,6 @@ sources/go-piper:
 sources/go-piper/libpiper_binding.a: sources/go-piper
 	$(MAKE) -C sources/go-piper libpiper_binding.a example/main piper.o
 
-## stable diffusion (onnx)
-sources/go-stable-diffusion:
-	mkdir -p sources/go-stable-diffusion
-	cd sources/go-stable-diffusion && \
-	git init && \
-	git remote add origin $(STABLEDIFFUSION_REPO) && \
-	git fetch origin && \
-	git checkout $(STABLEDIFFUSION_VERSION) && \
-	git submodule update --init --recursive --depth 1 --single-branch
-
-sources/go-stable-diffusion/libstablediffusion.a: sources/go-stable-diffusion
-	CPATH="$(CPATH):/usr/include/opencv4" $(MAKE) -C sources/go-stable-diffusion libstablediffusion.a
-
 ## stablediffusion (ggml)
 sources/stablediffusion-ggml.cpp:
 	git clone --recursive $(STABLEDIFFUSION_GGML_REPO) sources/stablediffusion-ggml.cpp && \
@@ -331,20 +310,18 @@ sources/whisper.cpp:
 sources/whisper.cpp/libwhisper.a: sources/whisper.cpp
 	cd sources/whisper.cpp && $(MAKE) libwhisper.a libggml.a
 
-get-sources: sources/go-llama.cpp sources/go-piper sources/stablediffusion-ggml.cpp sources/bark.cpp sources/whisper.cpp sources/go-stable-diffusion backend/cpp/llama/llama.cpp
+get-sources: sources/go-llama.cpp sources/go-piper sources/stablediffusion-ggml.cpp sources/bark.cpp sources/whisper.cpp backend/cpp/llama/llama.cpp
 
 replace:
 	$(GOCMD) mod edit -replace github.com/ggerganov/whisper.cpp=$(CURDIR)/sources/whisper.cpp
 	$(GOCMD) mod edit -replace github.com/ggerganov/whisper.cpp/bindings/go=$(CURDIR)/sources/whisper.cpp/bindings/go
 	$(GOCMD) mod edit -replace github.com/mudler/go-piper=$(CURDIR)/sources/go-piper
-	$(GOCMD) mod edit -replace github.com/mudler/go-stable-diffusion=$(CURDIR)/sources/go-stable-diffusion
 	$(GOCMD) mod edit -replace github.com/go-skynet/go-llama.cpp=$(CURDIR)/sources/go-llama.cpp
 
 dropreplace:
 	$(GOCMD) mod edit -dropreplace github.com/ggerganov/whisper.cpp
 	$(GOCMD) mod edit -dropreplace github.com/ggerganov/whisper.cpp/bindings/go
 	$(GOCMD) mod edit -dropreplace github.com/mudler/go-piper
-	$(GOCMD) mod edit -dropreplace github.com/mudler/go-stable-diffusion
 	$(GOCMD) mod edit -dropreplace github.com/go-skynet/go-llama.cpp
 
 prepare-sources: get-sources replace
@@ -355,7 +332,6 @@ rebuild: ## Rebuilds the project
 	$(GOCMD) clean -cache
 	$(MAKE) -C sources/go-llama.cpp clean
 	$(MAKE) -C sources/whisper.cpp clean
-	$(MAKE) -C sources/go-stable-diffusion clean
 	$(MAKE) -C sources/go-piper clean
 	$(MAKE) build
 
@@ -470,7 +446,7 @@ prepare-test: grpcs
 
 test: prepare test-models/testmodel.ggml grpcs
 	@echo 'Running tests'
-	export GO_TAGS="tts stablediffusion debug"
+	export GO_TAGS="tts debug"
 	$(MAKE) prepare-test
 	HUGGINGFACE_GRPC=$(abspath ./)/backend/python/transformers/run.sh TEST_DIR=$(abspath ./)/test-dir/ FIXTURES=$(abspath ./)/tests/fixtures CONFIG_FILE=$(abspath ./)/test-models/config.yaml MODELS_PATH=$(abspath ./)/test-models \
 	$(GOCMD) run github.com/onsi/ginkgo/v2/ginkgo --label-filter="!llama && !llama-gguf"  --flake-attempts $(TEST_FLAKES) --fail-fast -v -r $(TEST_PATHS)
@@ -558,10 +534,10 @@ protogen-go-clean:
 	$(RM) bin/*
 
 .PHONY: protogen-python
-protogen-python: autogptq-protogen bark-protogen coqui-protogen diffusers-protogen exllama2-protogen mamba-protogen rerankers-protogen transformers-protogen parler-tts-protogen kokoro-protogen vllm-protogen openvoice-protogen
+protogen-python: autogptq-protogen bark-protogen coqui-protogen diffusers-protogen exllama2-protogen rerankers-protogen transformers-protogen kokoro-protogen vllm-protogen faster-whisper-protogen
 
 .PHONY: protogen-python-clean
-protogen-python-clean: autogptq-protogen-clean bark-protogen-clean coqui-protogen-clean diffusers-protogen-clean  exllama2-protogen-clean mamba-protogen-clean rerankers-protogen-clean transformers-protogen-clean parler-tts-protogen-clean kokoro-protogen-clean vllm-protogen-clean openvoice-protogen-clean
+protogen-python-clean: autogptq-protogen-clean bark-protogen-clean coqui-protogen-clean diffusers-protogen-clean  exllama2-protogen-clean rerankers-protogen-clean transformers-protogen-clean kokoro-protogen-clean vllm-protogen-clean faster-whisper-protogen-clean
 
 .PHONY: autogptq-protogen
 autogptq-protogen:
@@ -595,6 +571,14 @@ diffusers-protogen:
 diffusers-protogen-clean:
 	$(MAKE) -C backend/python/diffusers protogen-clean
 
+.PHONY: faster-whisper-protogen
+faster-whisper-protogen:
+	$(MAKE) -C backend/python/faster-whisper protogen
+
+.PHONY: faster-whisper-protogen-clean
+faster-whisper-protogen-clean:
+	$(MAKE) -C backend/python/faster-whisper protogen-clean
+
 .PHONY: exllama2-protogen
 exllama2-protogen:
 	$(MAKE) -C backend/python/exllama2 protogen
@@ -602,14 +586,6 @@ exllama2-protogen:
 .PHONY: exllama2-protogen-clean
 exllama2-protogen-clean:
 	$(MAKE) -C backend/python/exllama2 protogen-clean
-
-.PHONY: mamba-protogen
-mamba-protogen:
-	$(MAKE) -C backend/python/mamba protogen
-
-.PHONY: mamba-protogen-clean
-mamba-protogen-clean:
-	$(MAKE) -C backend/python/mamba protogen-clean
 
 .PHONY: rerankers-protogen
 rerankers-protogen:
@@ -627,14 +603,6 @@ transformers-protogen:
 transformers-protogen-clean:
 	$(MAKE) -C backend/python/transformers protogen-clean
 
-.PHONY: parler-tts-protogen
-parler-tts-protogen:
-	$(MAKE) -C backend/python/parler-tts protogen
-
-.PHONY: parler-tts-protogen-clean
-parler-tts-protogen-clean:
-	$(MAKE) -C backend/python/parler-tts protogen-clean
-
 .PHONY: kokoro-protogen
 kokoro-protogen:
 	$(MAKE) -C backend/python/kokoro protogen
@@ -642,14 +610,6 @@ kokoro-protogen:
 .PHONY: kokoro-protogen-clean
 kokoro-protogen-clean:
 	$(MAKE) -C backend/python/kokoro protogen-clean
-
-.PHONY: openvoice-protogen
-openvoice-protogen:
-	$(MAKE) -C backend/python/openvoice protogen
-
-.PHONY: openvoice-protogen-clean
-openvoice-protogen-clean:
-	$(MAKE) -C backend/python/openvoice protogen-clean
 
 .PHONY: vllm-protogen
 vllm-protogen:
@@ -666,13 +626,11 @@ prepare-extra-conda-environments: protogen-python
 	$(MAKE) -C backend/python/bark
 	$(MAKE) -C backend/python/coqui
 	$(MAKE) -C backend/python/diffusers
+	$(MAKE) -C backend/python/faster-whisper
 	$(MAKE) -C backend/python/vllm
-	$(MAKE) -C backend/python/mamba
 	$(MAKE) -C backend/python/rerankers
 	$(MAKE) -C backend/python/transformers
-	$(MAKE) -C backend/python/parler-tts
 	$(MAKE) -C backend/python/kokoro
-	$(MAKE) -C backend/python/openvoice
 	$(MAKE) -C backend/python/exllama2
 
 prepare-test-extra: protogen-python
@@ -741,6 +699,13 @@ backend-assets/grpc/llama-cpp-avx2: backend-assets/grpc backend/cpp/llama/llama.
 	$(info ${GREEN}I llama-cpp build info:avx2${RESET})
 	CMAKE_ARGS="$(CMAKE_ARGS) -DGGML_AVX=on -DGGML_AVX2=on -DGGML_AVX512=off -DGGML_FMA=on -DGGML_F16C=on" $(MAKE) VARIANT="llama-avx2" build-llama-cpp-grpc-server
 	cp -rfv backend/cpp/llama-avx2/grpc-server backend-assets/grpc/llama-cpp-avx2
+
+backend-assets/grpc/llama-cpp-avx512: backend-assets/grpc backend/cpp/llama/llama.cpp
+	cp -rf backend/cpp/llama backend/cpp/llama-avx512
+	$(MAKE) -C backend/cpp/llama-avx512 purge
+	$(info ${GREEN}I llama-cpp build info:avx512${RESET})
+	CMAKE_ARGS="$(CMAKE_ARGS) -DGGML_AVX=on -DGGML_AVX2=off -DGGML_AVX512=on -DGGML_FMA=on -DGGML_F16C=on" $(MAKE) VARIANT="llama-avx512" build-llama-cpp-grpc-server
+	cp -rfv backend/cpp/llama-avx512/grpc-server backend-assets/grpc/llama-cpp-avx512
 
 backend-assets/grpc/llama-cpp-avx: backend-assets/grpc backend/cpp/llama/llama.cpp
 	cp -rf backend/cpp/llama backend/cpp/llama-avx
@@ -814,13 +779,6 @@ backend-assets/grpc/piper: sources/go-piper sources/go-piper/libpiper_binding.a 
 	$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/piper ./backend/go/tts/
 ifneq ($(UPX),)
 	$(UPX) backend-assets/grpc/piper
-endif
-
-backend-assets/grpc/stablediffusion: sources/go-stable-diffusion sources/go-stable-diffusion/libstablediffusion.a backend-assets/grpc
-	CGO_LDFLAGS="$(CGO_LDFLAGS)" CPATH="$(CPATH):$(CURDIR)/sources/go-stable-diffusion/:/usr/include/opencv4" LIBRARY_PATH=$(CURDIR)/sources/go-stable-diffusion/ \
-	$(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o backend-assets/grpc/stablediffusion ./backend/go/image/stablediffusion
-ifneq ($(UPX),)
-	$(UPX) backend-assets/grpc/stablediffusion
 endif
 
 backend-assets/grpc/silero-vad: backend-assets/grpc backend-assets/lib/libonnxruntime.so.1

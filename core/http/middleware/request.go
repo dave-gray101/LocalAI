@@ -1,3 +1,4 @@
+<<<<<<< HEAD:core/http/middleware/request.go
 package middleware
 
 import (
@@ -431,6 +432,14 @@ func mergeOpenAIRequestAndBackendConfig(config *config.BackendConfig, input *sch
 			if s, ok := pp.(string); ok {
 				config.PromptStrings = append(config.PromptStrings, s)
 			}
+		}
+	}
+
+	// If a quality was defined as number, convert it to step
+	if input.Quality != "" {
+		q, err := strconv.Atoi(input.Quality)
+		if err == nil {
+			config.Step = q
 		}
 	}
 
