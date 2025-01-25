@@ -1,4 +1,3 @@
-<<<<<<< HEAD:core/http/middleware/request.go
 package middleware
 
 import (
