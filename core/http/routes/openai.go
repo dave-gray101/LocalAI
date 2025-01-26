@@ -8,7 +8,6 @@ import (
 	"github.com/mudler/LocalAI/core/http/endpoints/openai"
 	"github.com/mudler/LocalAI/core/http/middleware"
 	"github.com/mudler/LocalAI/core/schema"
-	"github.com/mudler/LocalAI/pkg/model"
 )
 
 func RegisterOpenAIRoutes(app *fiber.App,
@@ -108,7 +107,7 @@ func RegisterOpenAIRoutes(app *fiber.App,
 
 	// images
 	app.Post("/v1/images/generations",
-		re.BuildConstantDefaultModelNameMiddleware(model.StableDiffusionGGMLBackend),
+		re.BuildConstantDefaultModelNameMiddleware("stablediffusion"),
 		re.SetModelAndConfig(func() schema.LocalAIRequest { return new(schema.OpenAIRequest) }),
 		re.SetOpenAIRequest,
 		openai.ImageEndpoint(application.BackendLoader(), application.ModelLoader(), application.ApplicationConfig()))
