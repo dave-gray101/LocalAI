@@ -456,6 +456,25 @@
     - filename: L3.3-Prikol-70B-v0.2-Q4_K_M.gguf
       sha256: fc0ff514efbc0b67981c2bf1423d5a2e1b8801e4266ba0c653ea148414fe5ffc
       uri: huggingface://bartowski/L3.3-Prikol-70B-v0.2-GGUF/L3.3-Prikol-70B-v0.2-Q4_K_M.gguf
+- !!merge <<: *llama33
+  name: "l3.3-nevoria-r1-70b"
+  icon: https://cdn-uploads.huggingface.co/production/uploads/64545af5ec40bbbd01242ca6/_oWpsvCZ-graNKzJBBjGo.jpeg
+  urls:
+    - https://huggingface.co/Steelskull/L3.3-Nevoria-R1-70b
+    - https://huggingface.co/bartowski/L3.3-Nevoria-R1-70b-GGUF
+  description: |
+    This model builds upon the original Nevoria foundation, incorporating the Deepseek-R1 reasoning architecture to enhance dialogue interaction and scene comprehension. While maintaining Nevoria's core strengths in storytelling and scene description (derived from EVA, EURYALE, and Anubis), this iteration aims to improve prompt adherence and creative reasoning capabilities. The model also retains the balanced perspective introduced by Negative_LLAMA and Nemotron elements. Also, the model plays the card to almost a fault, It'll pick up on minor issues and attempt to run with them. Users had it call them out for misspelling a word while playing in character.
+
+    Note: While Nevoria-R1 represents a significant architectural change, rather than a direct successor to Nevoria, it operates as a distinct model with its own characteristics.
+
+    The lorablated model base choice was intentional, creating unique weight interactions similar to the original Astoria model and Astoria V2 model. This "weight twisting" effect, achieved by subtracting the lorablated base model during merging, creates an interesting balance in the model's behavior. While unconventional compared to sequential component application, this approach was chosen for its unique response characteristics.
+  overrides:
+    parameters:
+      model: L3.3-Nevoria-R1-70b-Q4_K_M.gguf
+  files:
+    - filename: L3.3-Nevoria-R1-70b-Q4_K_M.gguf
+      sha256: 9f32f202fb5b1465c942693bb11eea9e8a1c5686b00602715b495c068eaf1c58
+      uri: huggingface://bartowski/L3.3-Nevoria-R1-70b-GGUF/L3.3-Nevoria-R1-70b-Q4_K_M.gguf
 - &rwkv
   url: "github:mudler/LocalAI/gallery/rwkv.yaml@master"
   name: "rwkv-6-world-7b"
@@ -3381,6 +3400,33 @@
     - filename: Vikhr-Qwen-2.5-1.5B-Instruct.Q4_K_M.gguf
       sha256: eaeac314e30b461413bc1cc819cdc0cd6a79265711fd0b8268702960a082c7bd
       uri: huggingface://QuantFactory/Vikhr-Qwen-2.5-1.5B-Instruct-GGUF/Vikhr-Qwen-2.5-1.5B-Instruct.Q4_K_M.gguf
+- !!merge <<: *qwen25
+  name: "dumpling-qwen2.5-32b"
+  icon: https://huggingface.co/nbeerbower/Dumpling-Qwen2.5-32B/resolve/main/dumpling_cover.png?download=true
+  urls:
+    - https://huggingface.co/nbeerbower/Dumpling-Qwen2.5-32B
+    - https://huggingface.co/bartowski/Dumpling-Qwen2.5-32B-GGUF
+  description: |
+   nbeerbower/Rombos-EVAGutenberg-TIES-Qwen2.5-32B finetuned on:
+    nbeerbower/GreatFirewall-DPO
+    nbeerbower/Schule-DPO
+    nbeerbower/Purpura-DPO
+    nbeerbower/Arkhaios-DPO
+    jondurbin/truthy-dpo-v0.1
+    antiven0m/physical-reasoning-dpo
+    flammenai/Date-DPO-NoAsterisks
+    flammenai/Prude-Phi3-DPO
+    Atsunori/HelpSteer2-DPO
+    jondurbin/gutenberg-dpo-v0.1
+    nbeerbower/gutenberg2-dpo
+    nbeerbower/gutenberg-moderne-dpo.
+  overrides:
+    parameters:
+      model: Dumpling-Qwen2.5-32B-Q4_K_M.gguf
+  files:
+    - filename: Dumpling-Qwen2.5-32B-Q4_K_M.gguf
+      sha256: c5b7d773cc614650ad3956008e30d0607df6106c28e381870a9b950bd4ee1d17
+      uri: huggingface://bartowski/Dumpling-Qwen2.5-32B-GGUF/Dumpling-Qwen2.5-32B-Q4_K_M.gguf
 - &llama31  ## LLama3.1
   url: "github:mudler/LocalAI/gallery/llama3.1-instruct.yaml@master"
   icon: https://avatars.githubusercontent.com/u/153379578
@@ -5430,6 +5476,25 @@
     - filename: DeepSeek-R1-Distill-Llama-70B-Q4_K_M.gguf
       sha256: 181a82a1d6d2fa24fe4db83a68eee030384986bdbdd4773ba76424e3a6eb9fd8
       uri: huggingface://bartowski/DeepSeek-R1-Distill-Llama-70B-GGUF/DeepSeek-R1-Distill-Llama-70B-Q4_K_M.gguf
+- !!merge <<: *deepseek-r1
+  name: "deepseek-r1-qwen-2.5-32b-ablated"
+  icon: https://cdn-uploads.huggingface.co/production/uploads/6587d8dd1b44d0e694104fbf/0dkt6EhZYwXVBxvSWXdaM.png
+  urls:
+    - https://huggingface.co/NaniDAO/deepseek-r1-qwen-2.5-32B-ablated
+    - https://huggingface.co/bartowski/deepseek-r1-qwen-2.5-32B-ablated-GGUF
+  description: |
+    DeepSeek-R1-Distill-Qwen-32B with ablation technique applied for a more helpful (and based) reasoning model.
+
+    This means it will refuse less of your valid requests for an uncensored UX. Use responsibly and use common sense.
+
+    We do not take any responsibility for how you apply this intelligence, just as we do not for how you apply your own.
+  overrides:
+    parameters:
+      model: deepseek-r1-qwen-2.5-32B-ablated-Q4_K_M.gguf
+  files:
+    - filename: deepseek-r1-qwen-2.5-32B-ablated-Q4_K_M.gguf
+      sha256: 7f33898641ebe58fe178c3517efc129f4fe37c6ca2d8b91353c4539b0c3411ec
+      uri: huggingface://bartowski/deepseek-r1-qwen-2.5-32B-ablated-GGUF/deepseek-r1-qwen-2.5-32B-ablated-Q4_K_M.gguf
 - &qwen2  ## Start QWEN2
   url: "github:mudler/LocalAI/gallery/chatml.yaml@master"
   name: "qwen2-7b-instruct"
